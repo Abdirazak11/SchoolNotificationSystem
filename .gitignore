@@ -1,0 +1,46 @@
+## Build results
+bin/
+obj/
+
+## Visual Studio files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Rider
+.idea/
+
+## VS Code
+.vscode/
+
+## ASP.NET
+*.Publish.xml
+*.pubxml
+*.publishproj
+wwwroot/lib/
+
+## Logs
+*.log
+
+## OS files
+Thumbs.db
+.DS_Store
+
+## NuGet
+packages/
+*.nupkg
+*.snupkg
+
+## Environment / secrets
+appsettings.Development.json
+appsettings.Local.json
+.env
+
+## Test results
+TestResults/
+
+## IIS
+.vsconfig
+
