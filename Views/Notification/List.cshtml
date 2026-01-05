@@ -1,0 +1,176 @@
+﻿<!-- Views/Notification/List.cshtml -->
+@model IEnumerable<SchoolNotificationSystem.Models.Notification>
+    @{
+    ViewData["Title"] = "My Notifications";
+    }
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <h2>📬 All Notifications for My Child</h2>
+                <p class="text-muted">Complete history of notifications</p>
+            </div>
+        </div>
+
+        @if (ViewBag.Message != null)
+    {
+        <div class="alert alert-warning">
+            @ViewBag.Message
+        </div>
+    }
+    else if (Model.Any())
+    {
+ <!-- Filter Tabs -->
+        <ul class="nav nav-pills mb-4" id="notificationTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="all-tab" data-bs-toggle="pill" data-bs-target="#all" type="button">
+                    All (@Model.Count())
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="attendance-tab" data-bs-toggle="pill" data-bs-target="#attendance" type="button">
+                    Attendance (@Model.Count(n => n.Type == "Attendance"))
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="academic-tab" data-bs-toggle="pill" data-bs-target="#academic" type="button">
+                    Academic (@Model.Count(n => n.Type == "Academic"))
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="admin-tab" data-bs-toggle="pill" data-bs-target="#admin" type="button">
+                    Administrative (@Model.Count(n => n.Type == "Administrative"))
+                </button>
+            </li>
+        </ul>
+
+ <!-- Tab Content -->
+        <div class="tab-content" id="notificationTabContent">
+            <!-- All Notifications -->
+            <div class="tab-pane fade show active" id="all" role="tabpanel">
+                @foreach (var notification in Model)
+                {
+                <div class="card mb-3 border-start border-5 @GetBorderClass(notification.Type)">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-10">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title mb-0">@notification.Title</h5>
+                                    <span class="badge @GetBadgeClass(notification.Type)">
+                                        @GetIcon(notification.Type) @notification.Type
+                                    </span>
+                                </div>
+                                <p class="card-text mt-2">@notification.Message</p>
+                                <div class="text-muted small">
+                                    <span>👤 <strong>From:</strong> @notification.CreatedBy</span> |
+                                    <span>📅 <strong>Date:</strong> @notification.CreatedDate.ToString("dd MMMM yyyy")</span> |
+                                    <span>🕐 <strong>Time:</strong> @notification.CreatedDate.ToString("hh:mm tt")</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+
+            <!-- Attendance Tab -->
+            <div class="tab-pane fade" id="attendance" role="tabpanel">
+                @foreach (var notification in Model.Where(n => n.Type == "Attendance"))
+                {
+                <div class="card mb-3 border-start border-5 border-success">
+                    <div class="card-body">
+                        <h5 class="card-title">@notification.Title</h5>
+                        <p class="card-text">@notification.Message</p>
+                        <small class="text-muted">
+                            @notification.CreatedDate.ToString("dd MMMM yyyy, hh:mm tt") | @notification.CreatedBy
+                        </small>
+                    </div>
+                </div>
+                }
+            </div>
+
+            <!-- Academic Tab -->
+            <div class="tab-pane fade" id="academic" role="tabpanel">
+                @foreach (var notification in Model.Where(n => n.Type == "Academic"))
+                {
+                <div class="card mb-3 border-start border-5 border-primary">
+                    <div class="card-body">
+                        <h5 class="card-title">@notification.Title</h5>
+                        <p class="card-text">@notification.Message</p>
+                        <small class="text-muted">
+                            @notification.CreatedDate.ToString("dd MMMM yyyy, hh:mm tt") | @notification.CreatedBy
+                        </small>
+                    </div>
+                </div>
+                }
+            </div>
+
+            <!-- Administrative Tab -->
+            <div class="tab-pane fade" id="admin" role="tabpanel">
+                @foreach (var notification in Model.Where(n => n.Type == "Administrative"))
+                {
+                <div class="card mb-3 border-start border-5 border-warning">
+                    <div class="card-body">
+                        <h5 class="card-title">@notification.Title</h5>
+                        <p class="card-text">@notification.Message</p>
+                        <small class="text-muted">
+                            @notification.CreatedDate.ToString("dd MMMM yyyy, hh:mm tt") | @notification.CreatedBy
+                        </small>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center">
+            <h4>📭 No Notifications Yet</h4>
+            <p>You don't have any notifications at the moment. Check back later!</p>
+        </div>
+    }
+
+        <div class="text-center mt-4">
+            <a asp-controller="Home" asp-action="ParentDashboard" class="btn btn-primary btn-lg">
+                ← Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    @functions {
+    string GetBorderClass(string type)
+    {
+        return type switch
+        {
+            "Attendance" => "border-success",
+            "Academic" => "border-primary",
+            "Administrative" => "border-warning",
+            "Health" => "border-danger",
+            _ => "border-secondary"
+        };
+    }
+
+    string GetBadgeClass(string type)
+    {
+        return type switch
+        {
+            "Attendance" => "bg-success",
+            "Academic" => "bg-primary",
+            "Administrative" => "bg-warning text-dark",
+            "Health" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    string GetIcon(string type)
+    {
+        return type switch
+        {
+            "Attendance" => "✓",
+            "Academic" => "📚",
+            "Administrative" => "📢",
+            "Health" => "🏥",
+            _ => "📝"
+        };
+    }
+    }
