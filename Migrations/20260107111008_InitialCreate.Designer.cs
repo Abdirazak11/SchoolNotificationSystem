@@ -12,7 +12,7 @@ using SchoolNotificationSystem.Data;
 namespace SchoolNotificationSystem.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260105203535_InitialCreate")]
+    [Migration("20260107111008_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
