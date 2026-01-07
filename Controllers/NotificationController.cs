@@ -1,5 +1,4 @@
-﻿// Controllers/NotificationController.cs
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -59,13 +58,19 @@ namespace SchoolNotificationSystem.Controllers
             {
                 var user = await _userManager.GetUserAsync(User);
 
+                if (user == null)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                // Create new notification
                 var notification = new Notification
                 {
                     StudentId = model.StudentId,
                     Title = model.Title,
                     Message = model.Message,
                     Type = model.Type,
-                    CreatedBy = user!.FullName,
+                    CreatedBy = user.FullName,
                     CreatedDate = DateTime.Now
                 };
 
@@ -74,6 +79,7 @@ namespace SchoolNotificationSystem.Controllers
 
                 TempData["SuccessMessage"] = "Notification sent successfully!";
 
+                // Redirect based on role
                 if (User.IsInRole("Teacher"))
                     return RedirectToAction("TeacherDashboard", "Home");
                 else
@@ -98,9 +104,14 @@ namespace SchoolNotificationSystem.Controllers
         {
             var user = await _userManager.GetUserAsync(User);
 
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
             // Get parent's children
             var students = await _context.Students
-                .Where(s => s.ParentId == user!.Id)
+                .Where(s => s.ParentId == user.Id)
                 .ToListAsync();
 
             if (!students.Any())
@@ -122,4 +133,3 @@ namespace SchoolNotificationSystem.Controllers
         }
     }
 }
-

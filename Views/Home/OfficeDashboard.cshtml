@@ -1,0 +1,79 @@
+﻿@model IEnumerable<SchoolNotificationSystem.Models.Notification>
+    @{
+    ViewData["Title"] = "Office Dashboard";
+    }
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <h2>🏢 Welcome, @ViewBag.UserName</h2>
+                <p class="text-muted">School Administration Dashboard</p>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <h3>@ViewBag.TotalNotifications</h3>
+                        <p class="mb-0">Total Notifications</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h3>@ViewBag.TotalStudents</h3>
+                        <p class="mb-0">Total Students</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <a asp-controller="Notification" asp-action="Create" class="btn btn-warning btn-lg w-100" style="padding: 30px;">
+                    ➕ Create Notification
+                </a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">All Notifications</h5>
+            </div>
+            <div class="card-body">
+                @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Created By</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var notification in Model)
+                            {
+                            <tr>
+                                <td>@notification.Student.Name</td>
+                                <td>@notification.Title</td>
+                                <td>
+                                    <span class="badge bg-secondary">@notification.Type</span>
+                                </td>
+                                <td>@notification.CreatedBy</td>
+                                <td>@notification.CreatedDate.ToString("dd MMM yyyy")</td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">No notifications in the system.</p>
+            }
+            </div>
+        </div>
+    </div>
