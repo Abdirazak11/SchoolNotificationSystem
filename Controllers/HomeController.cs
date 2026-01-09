@@ -1,119 +1,165 @@
-// ADD THESE METHODS TO YOUR EXISTING HomeController.cs
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using SchoolNotificationSystem.Data;
+using SchoolNotificationSystem.Models;
+using SchoolNotificationSystem.Models.ViewModels;
 
-// GET: /Home/ManageStudents (Office only)
-[Authorize(Roles = "Office")]
-public async Task<IActionResult> ManageStudents()
+namespace SchoolNotificationSystem.Controllers
 {
-    var user = await _userManager.GetUserAsync(User);
-    ViewBag.UserName = user?.FullName;
-
-    // Get all students grouped by grade
-    var students = await _context.Students
-        .Include(s => s.Parent)
-        .OrderBy(s => s.Grade)
-        .ThenBy(s => s.Name)
-        .ToListAsync();
-
-    // Group students by grade
-    var studentsByGrade = students
-        .GroupBy(s => s.Grade)
-        .ToDictionary(g => g.Key, g => g.ToList());
-
-    var viewModel = new ManageStudentsViewModel
+    public class HomeController : Controller
     {
-        StudentsByGrade = studentsByGrade,
-        TotalStudents = students.Count,
-        TotalGrades = studentsByGrade.Keys.Count
-    };
+        private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-    return View(viewModel);
-}
-
-// GET: /Home/RegisterParent (Office only)
-[Authorize(Roles = "Office")]
-[HttpGet]
-public IActionResult RegisterParent()
-{
-    // List of grades for dropdown
-    var grades = new List<string>
-    {
-        "Grade 1", "Grade 2", "Grade 3", "Grade 4",
-        "Grade 5", "Grade 6", "Grade 7", "Grade 8"
-    };
-
-    ViewBag.Grades = new SelectList(grades);
-    return View();
-}
-
-// POST: /Home/RegisterParent
-[Authorize(Roles = "Office")]
-[HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> RegisterParent(RegisterParentViewModel model)
-{
-    if (ModelState.IsValid)
-    {
-        // Create parent user
-        var parent = new ApplicationUser
+        public HomeController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
-            UserName = model.Email,
-            Email = model.Email,
-            FullName = model.ParentFullName,
-            EmailConfirmed = true
-        };
+            _context = context;
+            _userManager = userManager;
+        }
 
-        var result = await _userManager.CreateAsync(parent, model.Password);
-
-        if (result.Succeeded)
+        public IActionResult Index()
         {
-            // Add to Parent role
-            await _userManager.AddToRoleAsync(parent, "Parent");
-
-            // Create student
-            var student = new Student
+            if (User.Identity?.IsAuthenticated == true)
             {
-                Name = model.StudentName,
-                Grade = model.Grade,
-                ParentId = parent.Id
+                if (User.IsInRole("Teacher"))
+                    return RedirectToAction("TeacherDashboard");
+                if (User.IsInRole("Office"))
+                    return RedirectToAction("OfficeDashboard");
+                if (User.IsInRole("Parent"))
+                    return RedirectToAction("ParentDashboard");
+            }
+            return RedirectToAction("Login", "Account");
+        }
+
+        [Authorize(Roles = "Teacher")]
+        public async Task<IActionResult> TeacherDashboard()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+            ViewBag.UserName = user.FullName;
+            var recentNotifications = await _context.Notifications.Include(n => n.Student).Where(n => n.CreatedBy == user.FullName).OrderByDescending(n => n.CreatedDate).Take(5).ToListAsync();
+            ViewBag.TotalNotifications = await _context.Notifications.Where(n => n.CreatedBy == user.FullName).CountAsync();
+            return View(recentNotifications);
+        }
+
+        [Authorize(Roles = "Office")]
+        public async Task<IActionResult> OfficeDashboard()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+            ViewBag.UserName = user.FullName;
+            var recentNotifications = await _context.Notifications.Include(n => n.Student).OrderByDescending(n => n.CreatedDate).Take(10).ToListAsync();
+            ViewBag.TotalNotifications = await _context.Notifications.CountAsync();
+            ViewBag.TotalStudents = await _context.Students.CountAsync();
+            return View(recentNotifications);
+        }
+
+        [Authorize(Roles = "Parent")]
+        public async Task<IActionResult> ParentDashboard()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+            ViewBag.UserName = user.FullName;
+            var students = await _context.Students.Where(s => s.ParentId == user.Id).ToListAsync();
+            if (!students.Any())
+            {
+                ViewBag.Message = "No student records found for your account.";
+                return View(new List<Notification>());
+            }
+            var studentIds = students.Select(s => s.Id).ToList();
+            var notifications = await _context.Notifications.Include(n => n.Student).Where(n => studentIds.Contains(n.StudentId)).OrderByDescending(n => n.CreatedDate).Take(10).ToListAsync();
+            ViewBag.StudentName = students.First().Name;
+            ViewBag.TotalNotifications = await _context.Notifications.Where(n => studentIds.Contains(n.StudentId)).CountAsync();
+            return View(notifications);
+        }
+
+        [Authorize(Roles = "Office")]
+        public async Task<IActionResult> ManageStudents()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            ViewBag.UserName = user?.FullName;
+            var students = await _context.Students.Include(s => s.Parent).OrderBy(s => s.Grade).ThenBy(s => s.Name).ToListAsync();
+            var studentsByGrade = students.GroupBy(s => s.Grade).ToDictionary(g => g.Key, g => g.ToList());
+            var viewModel = new ManageStudentsViewModel
+            {
+                StudentsByGrade = studentsByGrade,
+                TotalStudents = students.Count,
+                TotalGrades = studentsByGrade.Keys.Count
             };
+            return View(viewModel);
+        }
 
-            _context.Students.Add(student);
-            await _context.SaveChangesAsync();
+        [Authorize(Roles = "Office")]
+        [HttpGet]
+        public IActionResult RegisterParent()
+        {
+            var grades = new List<string> { "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8" };
+            ViewBag.Grades = new SelectList(grades);
+            return View();
+        }
 
-            TempData["SuccessMessage"] = $"Parent {model.ParentFullName} and student {model.StudentName} registered successfully!";
+        [Authorize(Roles = "Office")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RegisterParent(RegisterParentViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var parent = new ApplicationUser
+                {
+                    UserName = model.Email,
+                    Email = model.Email,
+                    FullName = model.ParentFullName,
+                    EmailConfirmed = true
+                };
+                var result = await _userManager.CreateAsync(parent, model.Password);
+                if (result.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(parent, "Parent");
+                    var student = new Student
+                    {
+                        Name = model.StudentName,
+                        Grade = model.Grade,
+                        ParentId = parent.Id
+                    };
+                    _context.Students.Add(student);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = $"Parent {model.ParentFullName} and student {model.StudentName} registered successfully!";
+                    return RedirectToAction("ManageStudents");
+                }
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+            }
+            var grades = new List<string> { "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8" };
+            ViewBag.Grades = new SelectList(grades);
+            return View(model);
+        }
+
+        [Authorize(Roles = "Office")]
+        public async Task<IActionResult> DeleteStudent(int id)
+        {
+            var student = await _context.Students.FindAsync(id);
+            if (student != null)
+            {
+                _context.Students.Remove(student);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Student deleted successfully!";
+            }
             return RedirectToAction("ManageStudents");
         }
-
-        // If failed, add errors
-        foreach (var error in result.Errors)
-        {
-            ModelState.AddModelError(string.Empty, error.Description);
-        }
     }
-
-    // Reload grades dropdown
-    var grades = new List<string>
-    {
-        "Grade 1", "Grade 2", "Grade 3", "Grade 4",
-        "Grade 5", "Grade 6", "Grade 7", "Grade 8"
-    };
-    ViewBag.Grades = new SelectList(grades);
-
-    return View(model);
-}
-
-// GET: /Home/DeleteStudent (Office only)
-[Authorize(Roles = "Office")]
-public async Task<IActionResult> DeleteStudent(int id)
-{
-    var student = await _context.Students.FindAsync(id);
-
-    if (student != null)
-    {
-        _context.Students.Remove(student);
-        await _context.SaveChangesAsync();
-        TempData["SuccessMessage"] = "Student deleted successfully!";
-    }
-
-    return RedirectToAction("ManageStudents");
 }
