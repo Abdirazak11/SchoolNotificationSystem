@@ -1,5 +1,4 @@
-﻿<!-- Views/Notification/Create.cshtml -->
-@model SchoolNotificationSystem.Models.ViewModels.CreateNotificationViewModel
+﻿@model SchoolNotificationSystem.Models.ViewModels.CreateNotificationViewModel
 @{
     ViewData["Title"] = "Create Notification";
 }
@@ -29,19 +28,6 @@
                                 <option value="">-- Select type --</option>
                             </select>
                             <span asp-validation-for="Type" class="text-danger"></span>
-
-                            @if (User.IsInRole("Teacher"))
-                            {
-                            <small class="form-text text-muted">
-                                💡 Teachers can send Attendance and Academic notifications
-                            </small>
-                            }
-                            else
-                            {
-                            <small class="form-text text-muted">
-                                💡 Office can send Administrative and Health notifications
-                            </small>
-                            }
                         </div>
 
                         <div class="mb-3">
@@ -52,40 +38,17 @@
 
                         <div class="mb-3">
                             <label asp-for="Message" class="form-label">Message *</label>
-                            <textarea asp-for="Message" class="form-control" rows="6"
-                                      placeholder="Write your notification message here..."></textarea>
+                            <textarea asp-for="Message" class="form-control" rows="6" placeholder="Write your notification message here..."></textarea>
                             <span asp-validation-for="Message" class="text-danger"></span>
                         </div>
 
                         <hr>
 
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            @if (User.IsInRole("Teacher"))
-                            {
-                            <a asp-controller="Home" asp-action="TeacherDashboard" class="btn btn-secondary btn-lg">Cancel</a>
-                            }
-                            else
-                            {
-                            <a asp-controller="Home" asp-action="OfficeDashboard" class="btn btn-secondary btn-lg">Cancel</a>
-                            }
-                            <button type="submit" class="btn btn-success btn-lg">
-                                ✉️ Send Notification
-                            </button>
+                            <a asp-controller="Home" asp-action="Index" class="btn btn-secondary btn-lg">Cancel</a>
+                            <button type="submit" class="btn btn-success btn-lg">✉️ Send Notification</button>
                         </div>
                     </form>
-                </div>
-            </div>
-
-            <!-- Quick Tips Card -->
-            <div class="card mt-3 border-info">
-                <div class="card-body">
-                    <h6 class="card-title text-info">💡 Quick Tips:</h6>
-                    <ul class="mb-0">
-                        <li><strong>Attendance:</strong> "Present today" or "Absent - sick leave"</li>
-                        <li><strong>Academic:</strong> Include exam scores, totals, and average</li>
-                        <li><strong>Administrative:</strong> School events, holidays, fee reminders</li>
-                        <li><strong>Health:</strong> Medical updates or health-related information</li>
-                    </ul>
                 </div>
             </div>
         </div>
@@ -95,4 +58,3 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }
-

@@ -1,0 +1,92 @@
+﻿@model SchoolNotificationSystem.Models.ViewModels.RegisterParentViewModel
+@{
+    ViewData["Title"] = "Register Parent & Student";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">👨‍👩‍👧 Register New Parent & Student</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="RegisterParent" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <h5 class="border-bottom pb-2 mb-3">👤 Parent Information</h5>
+
+                        <div class="mb-3">
+                            <label asp-for="ParentFullName" class="form-label">Parent Full Name *</label>
+                            <input asp-for="ParentFullName" class="form-control form-control-lg" placeholder="e.g., Ahmed Mohammed" />
+                            <span asp-validation-for="ParentFullName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label">Email Address *</label>
+                            <input asp-for="Email" class="form-control form-control-lg" placeholder="parent@example.com" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                            <small class="text-muted">This will be used for login</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Password" class="form-label">Password *</label>
+                                <input asp-for="Password" class="form-control form-control-lg" />
+                                <span asp-validation-for="Password" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ConfirmPassword" class="form-label">Confirm Password *</label>
+                                <input asp-for="ConfirmPassword" class="form-control form-control-lg" />
+                                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <h5 class="border-bottom pb-2 mb-3">👨‍🎓 Student Information</h5>
+
+                        <div class="mb-3">
+                            <label asp-for="StudentName" class="form-label">Student Name *</label>
+                            <input asp-for="StudentName" class="form-control form-control-lg" placeholder="e.g., Sara Ahmed" />
+                            <span asp-validation-for="StudentName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Grade" class="form-label">Grade *</label>
+                            <select asp-for="Grade" class="form-select form-select-lg" asp-items="ViewBag.Grades">
+                                <option value="">-- Select Grade --</option>
+                            </select>
+                            <span asp-validation-for="Grade" class="text-danger"></span>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="ManageStudents" class="btn btn-secondary btn-lg">Cancel</a>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                ✅ Register Parent & Student
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mt-3 border-info">
+                <div class="card-body">
+                    <h6 class="text-info">ℹ️ Important Notes:</h6>
+                    <ul class="mb-0">
+                        <li>The parent will receive login credentials (Email + Password)</li>
+                        <li>Password must be at least 6 characters with uppercase, lowercase, and numbers</li>
+                        <li>One parent account will be created with one student initially</li>
+                        <li>You can add more children later for the same parent</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
