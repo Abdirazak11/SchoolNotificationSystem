@@ -1,7 +1,4 @@
-﻿// ============================================
-// File: Models/ViewModels/CreateNotificationViewModel.cs
-// ============================================
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace SchoolNotificationSystem.Models.ViewModels
 {
@@ -23,5 +20,10 @@ namespace SchoolNotificationSystem.Models.ViewModels
         [Required(ErrorMessage = "Please select notification type")]
         [Display(Name = "Notification Type")]
         public string Type { get; set; } = string.Empty;
+
+        // NEW: Priority field
+        [Required(ErrorMessage = "Please select priority")]
+        [Display(Name = "Priority")]
+        public string Priority { get; set; } = "Normal";
     }
 }

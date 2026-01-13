@@ -21,6 +21,17 @@ namespace SchoolNotificationSystem.Models
         [StringLength(50)]
         public string Type { get; set; } = string.Empty;
 
+        // NEW: Priority/Category (Urgent, Normal, Info)
+        [Required]
+        [StringLength(20)]
+        public string Priority { get; set; } = "Normal";
+
+        // NEW: Read/Unread status
+        public bool IsRead { get; set; } = false;
+
+        // NEW: When was it read?
+        public DateTime? ReadDate { get; set; }
+
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
         [Required]
@@ -29,4 +40,3 @@ namespace SchoolNotificationSystem.Models
         public Student Student { get; set; } = null!;
     }
 }
-

@@ -17,6 +17,9 @@ namespace SchoolNotificationSystem.Models
         [Required]
         public string ParentId { get; set; } = string.Empty;
 
+        // NEW: Track when student was added
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
+
         public ApplicationUser Parent { get; set; } = null!;
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }

@@ -161,5 +161,124 @@ namespace SchoolNotificationSystem.Controllers
             }
             return RedirectToAction("ManageStudents");
         }
+
+        [Authorize(Roles = "Office")]
+        [HttpGet]
+        public async Task<IActionResult> EditStudent(int id)
+        {
+            var student = await _context.Students.Include(s => s.Parent).FirstOrDefaultAsync(s => s.Id == id);
+            if (student == null)
+            {
+                return NotFound();
+            }
+            var viewModel = new EditStudentViewModel
+            {
+                Id = student.Id,
+                Name = student.Name,
+                Grade = student.Grade,
+                ParentName = student.Parent.FullName,
+                ParentEmail = student.Parent.Email
+            };
+            var grades = new List<string> { "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8" };
+            ViewBag.Grades = new SelectList(grades);
+            return View(viewModel);
+        }
+
+        [Authorize(Roles = "Office")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditStudent(EditStudentViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var student = await _context.Students.FindAsync(model.Id);
+                if (student == null)
+                {
+                    return NotFound();
+                }
+                student.Name = model.Name;
+                student.Grade = model.Grade;
+                _context.Students.Update(student);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = $"Student {model.Name} updated successfully!";
+                return RedirectToAction("ManageStudents");
+            }
+            var grades = new List<string> { "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8" };
+            ViewBag.Grades = new SelectList(grades);
+            return View(model);
+        }
+
+        [Authorize(Roles = "Office")]
+        [HttpGet]
+        public IActionResult AddChild()
+        {
+            var grades = new List<string> { "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8" };
+            ViewBag.Grades = new SelectList(grades);
+            return View();
+        }
+
+        [Authorize(Roles = "Office")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddChild(AddChildViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var parent = await _userManager.FindByEmailAsync(model.ParentEmail);
+                if (parent == null)
+                {
+                    ModelState.AddModelError("ParentEmail", "Parent with this email not found.");
+                }
+                else
+                {
+                    var isParent = await _userManager.IsInRoleAsync(parent, "Parent");
+                    if (!isParent)
+                    {
+                        ModelState.AddModelError("ParentEmail", "This user is not a parent.");
+                    }
+                    else
+                    {
+                        var student = new Student
+                        {
+                            Name = model.StudentName,
+                            Grade = model.Grade,
+                            ParentId = parent.Id
+                        };
+                        _context.Students.Add(student);
+                        await _context.SaveChangesAsync();
+                        TempData["SuccessMessage"] = $"Student {model.StudentName} added to parent {parent.FullName} successfully!";
+                        return RedirectToAction("ManageStudents");
+                    }
+                }
+            }
+            var grades = new List<string> { "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8" };
+            ViewBag.Grades = new SelectList(grades);
+            return View(model);
+        }
+
+        [Authorize(Roles = "Office")]
+        public async Task<IActionResult> SearchStudents(string searchTerm, string selectedGrade)
+        {
+            var query = _context.Students.Include(s => s.Parent).AsQueryable();
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                query = query.Where(s => s.Name.Contains(searchTerm) || s.Parent.FullName.Contains(searchTerm) || s.Parent.Email.Contains(searchTerm));
+            }
+            if (!string.IsNullOrWhiteSpace(selectedGrade))
+            {
+                query = query.Where(s => s.Grade == selectedGrade);
+            }
+            var results = await query.OrderBy(s => s.Name).ToListAsync();
+            var viewModel = new SearchStudentsViewModel
+            {
+                SearchTerm = searchTerm ?? string.Empty,
+                SelectedGrade = selectedGrade ?? string.Empty,
+                Results = results,
+                TotalResults = results.Count
+            };
+            var grades = new List<string> { "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8" };
+            ViewBag.Grades = new SelectList(grades);
+            return View(viewModel);
+        }
     }
 }

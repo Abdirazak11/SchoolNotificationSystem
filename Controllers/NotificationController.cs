@@ -9,46 +9,40 @@ using SchoolNotificationSystem.Models.ViewModels;
 
 namespace SchoolNotificationSystem.Controllers
 {
-    [Authorize] // All actions require authentication
+    [Authorize]
     public class NotificationController : Controller
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public NotificationController(
-            ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+        public NotificationController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _userManager = userManager;
         }
 
-        // GET: /Notification/Create (For Teachers and Office only)
         [Authorize(Roles = "Teacher,Office")]
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            // Get all students for dropdown
-            var students = await _context.Students
-                .OrderBy(s => s.Name)
-                .ToListAsync();
-
+            var students = await _context.Students.OrderBy(s => s.Name).ToListAsync();
             ViewBag.Students = new SelectList(students, "Id", "Name");
 
-            // Set notification types based on role
             if (User.IsInRole("Teacher"))
             {
                 ViewBag.NotificationTypes = new SelectList(new[] { "Attendance", "Academic" });
             }
-            else // Office
+            else
             {
                 ViewBag.NotificationTypes = new SelectList(new[] { "Administrative", "Health" });
             }
 
+            // NEW: Priority options
+            ViewBag.Priorities = new SelectList(new[] { "Normal", "Urgent", "Info" });
+
             return View();
         }
 
-        // POST: /Notification/Create
         [Authorize(Roles = "Teacher,Office")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -57,21 +51,21 @@ namespace SchoolNotificationSystem.Controllers
             if (ModelState.IsValid)
             {
                 var user = await _userManager.GetUserAsync(User);
-
                 if (user == null)
                 {
                     return RedirectToAction("Login", "Account");
                 }
 
-                // Create new notification
                 var notification = new Notification
                 {
                     StudentId = model.StudentId,
                     Title = model.Title,
                     Message = model.Message,
                     Type = model.Type,
+                    Priority = model.Priority, // NEW
                     CreatedBy = user.FullName,
-                    CreatedDate = DateTime.Now
+                    CreatedDate = DateTime.Now,
+                    IsRead = false // NEW
                 };
 
                 _context.Notifications.Add(notification);
@@ -79,14 +73,12 @@ namespace SchoolNotificationSystem.Controllers
 
                 TempData["SuccessMessage"] = "Notification sent successfully!";
 
-                // Redirect based on role
                 if (User.IsInRole("Teacher"))
                     return RedirectToAction("TeacherDashboard", "Home");
                 else
                     return RedirectToAction("OfficeDashboard", "Home");
             }
 
-            // If validation fails, reload dropdowns
             var students = await _context.Students.OrderBy(s => s.Name).ToListAsync();
             ViewBag.Students = new SelectList(students, "Id", "Name");
 
@@ -95,24 +87,21 @@ namespace SchoolNotificationSystem.Controllers
             else
                 ViewBag.NotificationTypes = new SelectList(new[] { "Administrative", "Health" });
 
+            ViewBag.Priorities = new SelectList(new[] { "Normal", "Urgent", "Info" });
+
             return View(model);
         }
 
-        // GET: /Notification/List (For Parents only)
         [Authorize(Roles = "Parent")]
         public async Task<IActionResult> List()
         {
             var user = await _userManager.GetUserAsync(User);
-
             if (user == null)
             {
                 return RedirectToAction("Login", "Account");
             }
 
-            // Get parent's children
-            var students = await _context.Students
-                .Where(s => s.ParentId == user.Id)
-                .ToListAsync();
+            var students = await _context.Students.Where(s => s.ParentId == user.Id).ToListAsync();
 
             if (!students.Any())
             {
@@ -122,14 +111,58 @@ namespace SchoolNotificationSystem.Controllers
 
             var studentIds = students.Select(s => s.Id).ToList();
 
-            // Get all notifications for parent's children
             var notifications = await _context.Notifications
                 .Include(n => n.Student)
                 .Where(n => studentIds.Contains(n.StudentId))
                 .OrderByDescending(n => n.CreatedDate)
                 .ToListAsync();
 
+            // NEW: Calculate statistics
+            ViewBag.TotalNotifications = notifications.Count;
+            ViewBag.UnreadCount = notifications.Count(n => !n.IsRead);
+            ViewBag.UrgentCount = notifications.Count(n => n.Priority == "Urgent" && !n.IsRead);
+
             return View(notifications);
+        }
+
+        // NEW: Mark notification as read
+        [Authorize(Roles = "Parent")]
+        [HttpPost]
+        public async Task<IActionResult> MarkAsRead(int id)
+        {
+            var notification = await _context.Notifications.FindAsync(id);
+            if (notification != null)
+            {
+                notification.IsRead = true;
+                notification.ReadDate = DateTime.Now;
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction("List");
+        }
+
+        // NEW: Mark all as read
+        [Authorize(Roles = "Parent")]
+        [HttpPost]
+        public async Task<IActionResult> MarkAllAsRead()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var students = await _context.Students.Where(s => s.ParentId == user.Id).ToListAsync();
+            var studentIds = students.Select(s => s.Id).ToList();
+
+            var unreadNotifications = await _context.Notifications
+                .Where(n => studentIds.Contains(n.StudentId) && !n.IsRead)
+                .ToListAsync();
+
+            foreach (var notification in unreadNotifications)
+            {
+                notification.IsRead = true;
+                notification.ReadDate = DateTime.Now;
+            }
+
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "All notifications marked as read!";
+
+            return RedirectToAction("List");
         }
     }
 }
