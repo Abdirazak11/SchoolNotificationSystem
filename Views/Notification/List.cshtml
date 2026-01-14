@@ -5,9 +5,44 @@
 
     <div class="container mt-4">
         <div class="row mb-4">
-            <div class="col-md-12">
+            <div class="col-md-9">
                 <h2>📬 All Notifications for My Child</h2>
                 <p class="text-muted">Complete history of notifications</p>
+            </div>
+            <div class="col-md-3 text-end">
+                @if (ViewBag.UnreadCount > 0)
+            {
+                <form asp-action="MarkAllAsRead" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-success">✅ Mark All Read</button>
+                </form>
+            }
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <h3>@ViewBag.TotalNotifications</h3>
+                        <p class="mb-0">Total Notifications</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body text-center">
+                        <h3>@ViewBag.UnreadCount</h3>
+                        <p class="mb-0">Unread Notifications</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-danger text-white">
+                    <div class="card-body text-center">
+                        <h3>@ViewBag.UrgentCount</h3>
+                        <p class="mb-0">Urgent Unread</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -19,18 +54,40 @@
     {
         @foreach (var notification in Model)
         {
-        <div class="card mb-3 border-start border-5 @(notification.Type == "Attendance" ? "border-success" : notification.Type == "Academic" ? "border-primary" : "border-warning")">
+            var borderClass = notification.Type == "Attendance" ? "border-success" : notification.Type == "Academic" ? "border-primary" : "border-warning";
+            var priorityBadge = notification.Priority == "Urgent" ? "bg-danger" : notification.Priority == "Info" ? "bg-info" : "bg-secondary";
+
+        <div class="card mb-3 border-start border-5 @borderClass @(notification.IsRead ? "" : "bg-light")">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <h5 class="card-title">@notification.Title</h5>
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center mb-2">
+                            <h5 class="card-title mb-0 me-2">@notification.Title</h5>
+                            @if (!notification.IsRead)
+                                {
+                            <span class="badge bg-warning text-dark">NEW</span>
+                                }
+                        </div>
                         <p class="card-text">@notification.Message</p>
                         <small class="text-muted">
                             📅 @notification.CreatedDate.ToString("dd MMMM yyyy, hh:mm tt") |
                             👤 @notification.CreatedBy
+                            @if (notification.IsRead && notification.ReadDate.HasValue)
+                                {
+                            <span> | ✅ Read on @notification.ReadDate.Value.ToString("dd MMM yyyy")</span>
+                                }
                         </small>
                     </div>
-                    <span class="badge bg-secondary">@notification.Type</span>
+                    <div class="text-end">
+                        <span class="badge bg-secondary d-block mb-2">@notification.Type</span>
+                        <span class="badge @priorityBadge d-block mb-2">@notification.Priority</span>
+                        @if (!notification.IsRead)
+                            {
+                        <form asp-action="MarkAsRead" asp-route-id="@notification.Id" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-success">✅ Mark Read</button>
+                        </form>
+                            }
+                    </div>
                 </div>
             </div>
         </div>

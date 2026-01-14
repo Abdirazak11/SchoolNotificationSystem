@@ -5,14 +5,14 @@
 
 <div class="container mt-4">
     <div class="row mb-4">
-        <div class="col-md-8">
+        <div class="col-md-6">
             <h2>👨‍🎓 Manage Students</h2>
             <p class="text-muted">View and manage all students by grade</p>
         </div>
-        <div class="col-md-4 text-end">
-            <a asp-action="RegisterParent" class="btn btn-success btn-lg">
-                ➕ Register New Parent & Student
-            </a>
+        <div class="col-md-6 text-end">
+            <a asp-action="SearchStudents" class="btn btn-info btn-lg me-2">🔍 Search Students</a>
+            <a asp-action="AddChild" class="btn btn-warning btn-lg me-2">👶 Add Child</a>
+            <a asp-action="RegisterParent" class="btn btn-success btn-lg">➕ Register Parent</a>
         </div>
     </div>
 
@@ -62,13 +62,10 @@
                             <td>@student.Parent.FullName</td>
                             <td>@student.Parent.Email</td>
                             <td>
-                                <a asp-controller="Notification" asp-action="Create" class="btn btn-sm btn-primary">
-                                    📝 Send Notification
-                                </a>
+                                <a asp-action="EditStudent" asp-route-id="@student.Id" class="btn btn-sm btn-warning">✏️ Edit</a>
+                                <a asp-controller="Notification" asp-action="Create" class="btn btn-sm btn-primary">📝 Send Notification</a>
                                 <a asp-action="DeleteStudent" asp-route-id="@student.Id" class="btn btn-sm btn-danger"
-                                   onclick="return confirm('Are you sure you want to delete this student?')">
-                                    🗑️ Delete
-                                </a>
+                                   onclick="return confirm('Are you sure you want to delete this student?')">🗑️ Delete</a>
                             </td>
                         </tr>
                                 }
@@ -83,7 +80,7 @@
     {
     <div class="alert alert-info">
         <h4>No students registered yet!</h4>
-        <p>Click the "Register New Parent & Student" button to add your first student.</p>
+        <p>Click the "Register Parent" button to add your first student.</p>
     </div>
     }
 

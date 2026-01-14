@@ -1,0 +1,62 @@
+﻿@model SchoolNotificationSystem.Models.ViewModels.AddChildViewModel
+@{
+    ViewData["Title"] = "Add Child to Existing Parent";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">👶 Add Child to Existing Parent</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="AddChild" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <div class="alert alert-info">
+                            <strong>ℹ️ Note:</strong> This will add a new student to an existing parent account.
+                            Enter the parent's email address to link the new student.
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ParentEmail" class="form-label">Parent Email Address *</label>
+                            <input asp-for="ParentEmail" class="form-control form-control-lg" placeholder="parent@example.com" />
+                            <span asp-validation-for="ParentEmail" class="text-danger"></span>
+                            <small class="text-muted">Enter the email of an existing parent account</small>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <h5 class="border-bottom pb-2 mb-3">👨‍🎓 New Student Information</h5>
+
+                        <div class="mb-3">
+                            <label asp-for="StudentName" class="form-label">Student Name *</label>
+                            <input asp-for="StudentName" class="form-control form-control-lg" placeholder="e.g., Ahmed Ali" />
+                            <span asp-validation-for="StudentName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Grade" class="form-label">Grade *</label>
+                            <select asp-for="Grade" class="form-select form-select-lg" asp-items="ViewBag.Grades">
+                                <option value="">-- Select Grade --</option>
+                            </select>
+                            <span asp-validation-for="Grade" class="text-danger"></span>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-action="ManageStudents" class="btn btn-secondary btn-lg">Cancel</a>
+                            <button type="submit" class="btn btn-info btn-lg">✅ Add Child</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

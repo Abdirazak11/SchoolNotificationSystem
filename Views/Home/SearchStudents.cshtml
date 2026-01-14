@@ -1,0 +1,101 @@
+﻿@model SchoolNotificationSystem.Models.ViewModels.SearchStudentsViewModel
+@{
+    ViewData["Title"] = "Search Students";
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>🔍 Search Students</h2>
+            <p class="text-muted">Find students by name, parent name, or parent email</p>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Search Filters</h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="SearchStudents" method="get">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Search by Name or Email</label>
+                        <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control form-control-lg"
+                               placeholder="Enter student name, parent name, or email..." />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Filter by Grade</label>
+                        <select name="selectedGrade" class="form-select form-select-lg" asp-items="ViewBag.Grades">
+                            <option value="">-- All Grades --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary btn-lg w-100">🔍 Search</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (Model.TotalResults > 0)
+    {
+    <div class="alert alert-success">
+        <strong>Found @Model.TotalResults student(s)</strong>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Search Results</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Grade</th>
+                            <th>Parent Name</th>
+                            <th>Parent Email</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var student in Model.Results)
+                            {
+                        <tr>
+                            <td><strong>@student.Name</strong></td>
+                            <td><span class="badge bg-info">@student.Grade</span></td>
+                            <td>@student.Parent.FullName</td>
+                            <td>@student.Parent.Email</td>
+                            <td>
+                                <a asp-action="EditStudent" asp-route-id="@student.Id" class="btn btn-sm btn-warning">✏️ Edit</a>
+                                <a asp-controller="Notification" asp-action="Create" class="btn btn-sm btn-primary">📝 Notify</a>
+                            </td>
+                        </tr>
+                            }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    }
+    else if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.SelectedGrade))
+    {
+    <div class="alert alert-warning">
+        <h5>No students found</h5>
+        <p class="mb-0">Try different search terms or filters.</p>
+    </div>
+    }
+    else
+    {
+    <div class="alert alert-info">
+        <h5>👆 Use the search form above</h5>
+        <p class="mb-0">Enter a search term or select a grade to find students.</p>
+    </div>
+    }
+
+    <div class="text-center mt-4">
+        <a asp-action="ManageStudents" class="btn btn-secondary btn-lg">← Back to Manage Students</a>
+    </div>
+</div>
